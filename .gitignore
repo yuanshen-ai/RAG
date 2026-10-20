@@ -1,0 +1,49 @@
+
+
+# Local environments and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies, caches, generated files
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+dist-ssr/
+wheels/
+*.egg-info/
+coverage/
+*.tsbuildinfo
+
+# Editor and operating system files
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local logs, documents, extracted resumes and uploaded data
+log/
+logs/
+*.log
+.resume_text/
+upload/
+uploads/
+pdf_md/
+*.sqlite
+*.sqlite3
+*.db
+
+# Actual service configuration stays local; upload example templates
+conf/app_config.yaml
+docker/milvus/milvus.yaml

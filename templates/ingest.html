@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档上传与处理 - 企业级 RAG 系统</title>
+    <script src="/static/vue.global.prod.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            width: 100%;
+            min-width: 1000px;
+            padding: 40px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .dropzone {
+            border: 2px dashed #d0d5dd;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+        .dropzone:hover, .dropzone.active {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        .dropzone-icon { font-size: 48px; margin-bottom: 12px; }
+        .dropzone-text { font-size: 16px; color: #444; margin-bottom: 4px; }
+        .dropzone-hint { font-size: 12px; color: #999; }
+        .file-info {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f0f3ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .file-name { font-size: 14px; color: #333; font-weight: 500; }
+        .file-remove { color: #999; cursor: pointer; font-size: 18px; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: #fff;
+            color: #667eea;
+            border: 2px solid #667eea;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-secondary:hover { background: #f0f3ff; }
+        .progress {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+        }
+        .progress-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            gap: 12px;
+        }
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .step-icon.pending { background: #f0f0f0; color: #bbb; }
+        .step-icon.running { background: #e8f0fe; color: #4285f4; }
+        .step-icon.success { background: #e6f4ea; color: #34a853; }
+        .step-icon.failed { background: #fce8e6; color: #ea4335; }
+        .step-name { font-size: 14px; color: #333; flex: 1; }
+        .step-status { font-size: 12px; color: #999; }
+        .step-status.running { color: #4285f4; }
+        .step-status.success { color: #34a853; }
+        .step-status.failed { color: #ea4335; }
+        .error-msg {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #fce8e6;
+            border-radius: 8px;
+            color: #ea4335;
+            font-size: 14px;
+        }
+        .result {
+            margin-top: 16px;
+            padding: 16px;
+            background: #e6f4ea;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .result-text { font-size: 14px; color: #34a853; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="card">
+        <div class="title">📄 文档上传与处理</div>
+        <div class="subtitle">上传 PDF 文件，自动完成向量化存储</div>
+
+        <!-- 拖拽上传区域 -->
+        <div
+            class="dropzone"
+            :class="{ active: isDragging }"
+            @click="$refs.fileInput.click()"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="onDrop"
+        >
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-text">拖拽文件到此处，或点击选择</div>
+            <div class="dropzone-hint">支持 PDF 格式</div>
+        </div>
+        <input
+            type="file"
+            ref="fileInput"
+            accept=".pdf"
+            style="display: none"
+            @change="onFileSelect"
+        />
+
+        <!-- 已选文件信息 -->
+        <div v-if="selectedFile" class="file-info">
+            <span class="file-name">📎 {{ selectedFile.name }}</span>
+            <span class="file-remove" @click="clearFile" title="移除">×</span>
+        </div>
+
+        <!-- 上传按钮 -->
+        <button
+            class="btn btn-primary"
+            :disabled="!selectedFile || uploading"
+            @click="startUpload"
+        >
+            {{ uploading ? '处理中...' : '开始上传' }}
+        </button>
+
+        <!-- 进度列表 -->
+        <div v-if="steps.length > 0" class="progress">
+            <div class="progress-title">处理进度</div>
+            <div v-for="step in steps" :key="step.name" class="step">
+                <div class="step-icon" :class="step.status">
+                    {{ step.status === 'success' ? '✓' : step.status === 'running' ? '⋯' : step.status === 'failed' ? '✗' : '○' }}
+                </div>
+                <span class="step-name">{{ step.name }}</span>
+                <span class="step-status" :class="step.status">
+                    {{ step.status === 'success' ? '完成' : step.status === 'running' ? '进行中' : step.status === 'failed' ? '失败' : '等待中' }}
+                </span>
+            </div>
+        </div>
+
+        <!-- 错误信息 -->
+        <div v-if="errorMessage" class="error-msg">{{ errorMessage }}</div>
+
+        <!-- 完成结果 -->
+        <div v-if="done" class="result">
+            <div class="result-text">✅ 文档处理完成！</div>
+            <a href="/query" class="btn btn-secondary">去查询 →</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+const STEP_NAMES = [
+    'PDF转Markdown',
+    '图片摘要处理',
+    'Markdown分割',
+    '实体识别',
+    '文本转嵌入向量',
+];
+
+// 后端节点名 → 前端展示名 映射
+const STEP_NAME_MAP = {
+    'pdf_to_md': 'PDF转Markdown',
+    'md_img_handle': '图片摘要处理',
+    'md_split': 'Markdown分割',
+    'entity_recognize': '实体识别',
+    'text_to_embedding': '文本转嵌入向量',
+};
+
+createApp({
+    data() {
+        return {
+            selectedFile: null,
+            isDragging: false,
+            uploading: false,
+            steps: [],
+            errorMessage: '',
+            done: false,
+        };
+    },
+    methods: {
+        onDrop(e) {
+            this.isDragging = false;
+            const files = e.dataTransfer.files;
+            if (files.length > 0) this.selectFile(files[0]);
+        },
+        onFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) this.selectFile(files[0]);
+        },
+        selectFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                this.errorMessage = '仅支持 PDF 文件格式';
+                return;
+            }
+            this.selectedFile = file;
+            this.errorMessage = '';
+            this.done = false;
+            this.steps = [];
+        },
+        clearFile() {
+            this.selectedFile = null;
+            this.errorMessage = '';
+            this.done = false;
+            this.steps = [];
+        },
+        async startUpload() {
+            if (!this.selectedFile || this.uploading) return;
+
+            this.uploading = true;
+            this.errorMessage = '';
+            this.done = false;
+
+            // 初始化步骤列表（全部 pending）
+            this.steps = STEP_NAMES.map(name => ({
+                name,
+                status: 'pending',
+            }));
+
+            const formData = new FormData();
+            formData.append('file', this.selectedFile);
+
+            try {
+                const response = await fetch('/api/ingest/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    let eventType = '';
+                    let eventData = '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            eventType = line.slice(7).trim();
+                        } else if (line.startsWith('data: ')) {
+                            eventData = line.slice(6).trim();
+                            if (eventType && eventData) {
+                                this.handleEvent(eventType, eventData);
+                                eventType = '';
+                                eventData = '';
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                this.errorMessage = '上传或处理失败: ' + e.message;
+                this.uploading = false;
+            }
+
+            // 兜底处理：如果 SSE 流意外关闭而未收到 done/error 事件
+            if (this.uploading) {
+                this.errorMessage = '处理意外终止，请重试';
+                this.uploading = false;
+            }
+        },
+        handleEvent(eventType, rawData) {
+            try {
+                const data = JSON.parse(rawData);
+                if (eventType === 'step') {
+                    // 将后端英文节点名映射为前端中文展示名
+                    const displayName = STEP_NAME_MAP[data.name] || data.name;
+                    const idx = this.steps.findIndex(s => s.name === displayName);
+                    if (idx !== -1) {
+                        this.steps[idx].status = data.status;
+                        if (data.status === 'failed') {
+                            this.errorMessage = data.error || '步骤执行失败';
+                            this.uploading = false;
+                        }
+                    }
+                } else if (eventType === 'done') {
+                    this.done = true;
+                    this.uploading = false;
+                } else if (eventType === 'error') {
+                    this.errorMessage = data.message || '处理失败';
+                    this.uploading = false;
+                }
+            } catch (e) {
+                console.error('解析 SSE 事件失败:', e);
+            }
+        },
+    },
+}).mount('#app');
+</script>
+</body>
+</html>

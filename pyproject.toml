@@ -1,0 +1,36 @@
+[project]
+name = "rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "asgiref>=3.11.1",
+    "dashscope>=1.25.17",
+    "fastapi[standard]>=0.136.1",
+    "httpx>=0.28.1",
+    "langchain>=1.2.17",
+    "langchain-mcp-adapters>=0.2.2",
+    "langchain-openai>=1.2.1",
+    "langchain-text-splitters>=1.1.2",
+    "langgraph-checkpoint-postgres>=3.1.0",
+    "loguru>=0.7.3",
+    "minio>=7.2.20",
+    "omegaconf>=2.3.0",
+    "openai-agents>=0.17.2",
+    "psycopg[binary,pool]>=3.3.4",
+    "pydantic-settings>=2.14.0",
+    "pymilvus",
+    "pypdf>=6.0.0",
+    "python-frontmatter>=1.1.0",
+    "ragas>=0.4.3",
+]
+
+
+[project.scripts]
+rag = "rag:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"

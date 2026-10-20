@@ -1,0 +1,44 @@
+# Example configuration. Replace YOUR_* values before use.
+logging:
+  file:
+    enable: false
+    level: INFO
+    path: logs
+    rotation: 10 MB
+    retention: 7 days
+  console:
+    enable: true
+    level: INFO
+mineru:
+  base_url: https://mineru.net/api/v4
+  token: YOUR_TOKEN
+minio:
+  endpoint: localhost:9000
+  access_key: YOUR_ACCESS_KEY
+  secret_key: YOUR_SECRET_KEY
+  bucket_name: rag-bucket
+  secure: false
+milvus:
+  host: localhost
+  port: 19530
+  user: root
+  password: YOUR_PASSWORD
+postgre:
+  host: localhost
+  port: 5433
+  user: zhiliao
+  password: YOUR_PASSWORD
+  db_name: enterprise_rag
+query_agent:
+  web_search_enable: true
+bailian:
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: YOUR_API_KEY
+llm:
+  model_name: qwen3.5-flash
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: YOUR_API_KEY
+vlm:
+  model_name: qwen3.5-flash
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: YOUR_API_KEY
