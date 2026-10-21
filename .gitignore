@@ -47,3 +47,7 @@ pdf_md/
 # Actual service configuration stays local; upload example templates
 conf/app_config.yaml
 docker/milvus/milvus.yaml
+
+# Locally generated evaluation results (keep scripts and CSV inputs)
+/eval/*result*.json
+/eval/results/

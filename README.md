@@ -15,7 +15,7 @@
 | 联网搜索 | 通过 MCP 调用百炼联网搜索工具，补充库外证据，可在配置中关闭 |
 | 多轮问答与来源 | PostgreSQL 检查点保存会话，使用 thread_id 接续对话；回答携带图片与原文链接 |
 | 入库并发控制 | 图片摘要去重及并发限制；向量化按批处理并校验返回数量 |
-| 评测 | 提供 CSV 问答样本、RAGAS 评测脚本与结果文件，支持逐题核查和回归 |
+| 评测 | 提供 CSV 问答样本与 RAGAS 评测脚本，支持逐题核查和回归 |
 
 ## 系统流程
 
@@ -70,7 +70,7 @@ RAG/
 ├── repositories/               # 向量数据访问
 ├── conf/                       # 配置模型与示例
 ├── docker/                     # 基础服务 Docker Compose
-├── eval/                       # 评测样本、脚本与结果
+├── eval/                       # 评测脚本与输入样本
 ├── templates/                  # 文档上传与问答页面
 ├── static/                     # 页面静态资源
 ├── vendors/                    # 第三方 Markdown 切片组件
@@ -128,14 +128,6 @@ cd ..
 uv run python main.py
 ```
 
-| 页面 | 默认地址 |
-| --- | --- |
-| 文档上传与入库进度 | <http://localhost:8000/> |
-| 多轮问答 | <http://localhost:8000/query> |
-| API 文档 | <http://localhost:8000/docs> |
-
-上传自己的 PDF，等待入库完成，再进入问答页提问。项目不包含预先灌入的数据库和私有文档。
-
 ## 评测与关键实现
 
 基础服务、模型和文档入库准备完成后，可指定 CSV 样本执行评测：
@@ -144,7 +136,7 @@ uv run python main.py
 uv run python -m eval.ragas_eval -i eval/qa.csv -o eval/local_result.json
 ```
 
-评测会调用模型服务，结果取决于语料、配置和模型版本。样本与结果见 [eval](eval/)，具体参数见 [评测脚本](eval/ragas_eval.py)。
+评测会调用模型服务，结果取决于语料、配置和模型版本。输入样本见 [eval](eval/)，具体参数见 [评测脚本](eval/ragas_eval.py)。运行生成的评测结果保存在本地，不纳入版本管理。
 
 - [入库流程编排](agents/ingest/graph.py)
 - [查询流程编排](agents/query/graph.py)
